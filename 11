@@ -1,0 +1,81 @@
+// solve_transcend.cpp
+#include <iostream>
+#include <cstdlib>
+#include <cmath>
+#include <cassert> // assert
+using namespace std;
+
+// Особое значение "бесконечное количество корней".
+const int INFINITE_ROOTS = -1;
+
+const double // Вспомогательные числовые константы
+  HALF_PI   = 1.5707963267949,  // половина пи
+  PI        = 3.14159265358979, // число пи
+  DOUBLE_PI = 6.2831853071796,  // два пи
+  TOLERANCE = 1e-10; // граница между "нулём" и "ненулём"
+
+// Логарифм по произвольному основанию.
+double log(double base, double arg)
+{
+  return log(arg) / log(base);
+}
+
+// Проверка значения на близость нулю.
+bool is_almost_zero(double x, double tolerance = TOLERANCE)
+{
+  return abs(x) <= tolerance;
+}
+
+// Левая часть уравнения.
+double f(double a, double b, double c, double x)
+{
+  return 1.0 + sin(pow(a, x) + abs(log(b, c)));
+}
+
+// Решаем уравнение f(a, b, c, root) = 0 относительно root.
+// Функция возвращает "количество корней",
+// один корень записывает по ссылке.
+int solve_f(double a, double b, double c, double &root)
+{
+  if (a < 0.0 || b <= 0.0 || b == 1.0 || c <= 0.0)
+    return 0; // нет корней
+  if (a == 0.0 || a == 1.0) // потенциально почти все возможные x -- корни
+    return is_almost_zero(f(a, b, c, 1.0))? INFINITE_ROOTS: 0;
+
+  // Счётное число корней, получим один из них.
+  const double
+    expr_part = abs(log(b, c)) + HALF_PI,  // часть выражения
+    n = 1.0 + ceil(expr_part / DOUBLE_PI), // номер корня
+    log_arg = DOUBLE_PI * n - expr_part;   // аргумент логарифма в формуле корня
+
+  assert(log_arg > 0.0); // всегда должен быть положительным по построению
+  root = log(a, log_arg);
+  return 1;
+}
+
+
+int main()
+{
+  cout << "Solving f(a, b, c, x) = 0, enter a, b, c:\n";
+  cout.precision(16);
+  for (double a, b, c, x; cin >> a >> b >> c;)
+  {
+    switch (solve_f(a, b, c, x))
+    {
+    case 0:
+      cout << "no roots\n";
+      break;
+    case INFINITE_ROOTS:
+      cout << "any number is a root\n";
+      break;
+    case 1: // один корень, записан в x
+      cout << "x == " << x << ", error is " << f(a, b, c, x) << endl;
+      break;
+    default:
+      assert(!"impossible case: invalid roots quantity"); // невозможный случай
+      cout << "unknown error\n";
+      return EXIT_FAILURE;
+    }
+  }
+
+  return EXIT_SUCCESS;
